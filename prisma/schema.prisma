@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  userId       String    @unique // e.g. USR001, USR002
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         String    @default("user") // "admin" | "user"
+  status       String    @default("active") // "active" | "inactive"
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  meetings     Meeting[] @relation("OrganizerMeetings")
+}
+
+model Room {
+  id         String    @id @default(uuid())
+  roomName   String
+  roomNumber String    @unique // e.g. R101, R102
+  location   String    // e.g. "1st Floor", "2nd Floor"
+  capacity   Int
+  status     String    @default("active") // "active" | "inactive"
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  meetings   Meeting[]
+}
+
+model Meeting {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  organizer   String   // Display name of organizer
+  organizerId String?
+  roomId      String
+  meetingDate String   // Format: YYYY-MM-DD
+  startTime   String   // Format: HH:mm (24-hour)
+  endTime     String   // Format: HH:mm (24-hour)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organizerRef User?   @relation("OrganizerMeetings", fields: [organizerId], references: [id], onDelete: SetNull)
+  room         Room    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, meetingDate])
+}
+
+model Setting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}

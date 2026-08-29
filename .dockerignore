@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+.gitignore
+*.log
+.env.local
+.env.development.local
+.env.test.local
+meeting-room-system.zip
+Meeting-Room-System-Knowledge-Transfer.pdf
