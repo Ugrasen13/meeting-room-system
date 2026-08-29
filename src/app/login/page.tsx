@@ -52,20 +52,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleDemoLogin = (role: "pradhan" | "admin" | "user") => {
-    if (role === "pradhan") {
-      setEmail("Pradhan");
-      setPassword("123");
-    } else if (role === "admin") {
-      setEmail("admin@office.com");
-      setPassword("Admin@123");
-    } else {
-      setEmail("priya@office.com");
-      setPassword("User@123");
-    }
-    setError("");
-  };
-
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 grid grid-cols-1 md:grid-cols-2">
@@ -176,42 +162,6 @@ export default function LoginPage() {
                 )}
               </button>
             </form>
-
-            {/* Quick Demo Credentials */}
-            <div className="mt-6 pt-5 border-t border-slate-100">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2.5">
-                Quick One-Click Demo Sign In:
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin("pradhan")}
-                  className="flex flex-col items-center justify-center py-2.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl text-xs font-bold border border-emerald-300 shadow-xs transition cursor-pointer"
-                >
-                  <Shield className="w-4 h-4 text-emerald-600 mb-1" />
-                  <span>Pradhan</span>
-                  <span className="text-[10px] text-emerald-600/80 font-medium">Administrator</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin("admin")}
-                  className="flex flex-col items-center justify-center py-2.5 px-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 rounded-xl text-xs font-bold border border-indigo-300 shadow-xs transition cursor-pointer"
-                >
-                  <Shield className="w-4 h-4 text-indigo-600 mb-1" />
-                  <span>Rahul</span>
-                  <span className="text-[10px] text-indigo-600/80 font-medium">Administrator</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin("user")}
-                  className="flex flex-col items-center justify-center py-2.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold border border-slate-300 shadow-xs transition cursor-pointer"
-                >
-                  <Users className="w-4 h-4 text-slate-600 mb-1" />
-                  <span>Priya</span>
-                  <span className="text-[10px] text-slate-600/80 font-medium">Employee User</span>
-                </button>
-              </div>
-            </div>
           </div>
 
           <div className="mt-8 text-center text-[11px] text-slate-400 font-medium">
