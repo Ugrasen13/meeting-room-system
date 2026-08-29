@@ -173,29 +173,29 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => handleDemoLogin("pradhan")}
-                  className="flex flex-col items-center justify-center py-2 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl text-[11px] font-bold border border-emerald-300 shadow-xs transition"
+                  className="flex flex-col items-center justify-center py-2.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl text-xs font-bold border border-emerald-300 shadow-xs transition cursor-pointer"
                 >
-                  <Shield className="w-4 h-4 text-emerald-600 mb-0.5" />
+                  <Shield className="w-4 h-4 text-emerald-600 mb-1" />
                   <span>Pradhan</span>
-                  <span className="text-[9px] text-emerald-600 font-normal">Pass: 123</span>
+                  <span className="text-[10px] text-emerald-600/80 font-medium">Administrator</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => handleDemoLogin("admin")}
-                  className="flex flex-col items-center justify-center py-2 px-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 rounded-xl text-[11px] font-bold border border-indigo-300 shadow-xs transition"
+                  className="flex flex-col items-center justify-center py-2.5 px-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 rounded-xl text-xs font-bold border border-indigo-300 shadow-xs transition cursor-pointer"
                 >
-                  <Shield className="w-4 h-4 text-indigo-600 mb-0.5" />
-                  <span>Rahul (Admin)</span>
-                  <span className="text-[9px] text-indigo-600 font-normal">Admin@123</span>
+                  <Shield className="w-4 h-4 text-indigo-600 mb-1" />
+                  <span>Rahul</span>
+                  <span className="text-[10px] text-indigo-600/80 font-medium">Administrator</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => handleDemoLogin("user")}
-                  className="flex flex-col items-center justify-center py-2 px-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-[11px] font-bold border border-slate-300 shadow-xs transition"
+                  className="flex flex-col items-center justify-center py-2.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold border border-slate-300 shadow-xs transition cursor-pointer"
                 >
-                  <Users className="w-4 h-4 text-slate-600 mb-0.5" />
-                  <span>Priya (User)</span>
-                  <span className="text-[9px] text-slate-500 font-normal">User@123</span>
+                  <Users className="w-4 h-4 text-slate-600 mb-1" />
+                  <span>Priya</span>
+                  <span className="text-[10px] text-slate-600/80 font-medium">Employee User</span>
                 </button>
               </div>
             </div>
