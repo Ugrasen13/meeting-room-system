@@ -6,10 +6,14 @@ import { useRouter } from "next/navigation";
 import { AppLayout } from "@/components/layout/AppLayout";
 import {
   AlertCircle,
+  AlertTriangle,
+  Lightbulb,
+  CheckCircle2,
   Loader2,
   ChevronRight,
 } from "lucide-react";
 import { RoomData } from "@/types";
+import { formatTime12Hour } from "@/lib/meetingStatus";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -23,7 +27,13 @@ export default function EditMeetingPage({ params }: PageProps) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [conflictWarning, setConflictWarning] = useState<string | null>(null);
+  const [conflictData, setConflictData] = useState<{
+    title: string;
+    startTime: string;
+    endTime: string;
+    roomNumber: string;
+  } | null>(null);
+  const [isSlotAvailable, setIsSlotAvailable] = useState(false);
 
   const [title, setTitle] = useState("");
   const [organizer, setOrganizer] = useState("");
@@ -67,6 +77,55 @@ export default function EditMeetingPage({ params }: PageProps) {
     }
     loadData();
   }, [resolvedParams.id]);
+
+  // Pre-validate conflict whenever room, date, or times change
+  useEffect(() => {
+    let active = true;
+    async function checkConflict() {
+      if (!roomId || !meetingDate || !startTime || !endTime) {
+        setConflictData(null);
+        setIsSlotAvailable(false);
+        return;
+      }
+
+      if (endTime <= startTime) {
+        setConflictData(null);
+        setIsSlotAvailable(false);
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/meetings?roomId=${roomId}&date=${meetingDate}`);
+        if (res.ok) {
+          const data = await res.json();
+          const existing = (data.meetings || []).filter((m: any) => m.id !== resolvedParams.id);
+          const overlap = existing.find(
+            (m: any) => m.startTime < endTime && m.endTime > startTime
+          );
+          if (!active) return;
+          if (overlap) {
+            const selectedRoom = rooms.find((r) => r.id === roomId);
+            setConflictData({
+              title: overlap.title,
+              startTime: overlap.startTime,
+              endTime: overlap.endTime,
+              roomNumber: selectedRoom ? `${selectedRoom.roomNumber} (${selectedRoom.roomName})` : "This room",
+            });
+            setIsSlotAvailable(false);
+          } else {
+            setConflictData(null);
+            setIsSlotAvailable(true);
+          }
+        }
+      } catch (err) {
+        // silent
+      }
+    }
+    checkConflict();
+    return () => {
+      active = false;
+    };
+  }, [roomId, meetingDate, startTime, endTime, rooms, resolvedParams.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,6 +231,45 @@ export default function EditMeetingPage({ params }: PageProps) {
           <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-3">
             <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
             <span className="font-semibold">{error}</span>
+          </div>
+        )}
+
+        {conflictData && !error && (
+          <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50/60 to-amber-50 border-2 border-amber-300 text-amber-900 shadow-xs space-y-3 animate-in fade-in">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
+                <AlertTriangle className="w-4 h-4" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-bold text-amber-900 flex items-center gap-2">
+                  <span>Room Booking Conflict Detected</span>
+                </h4>
+                <p className="text-xs text-amber-800 mt-1 leading-relaxed">
+                  <strong>{conflictData.roomNumber}</strong> is already booked for{" "}
+                  <span className="font-semibold text-amber-950">&ldquo;{conflictData.title}&rdquo;</span> from{" "}
+                  <span className="font-mono font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded">
+                    {formatTime12Hour(conflictData.startTime)} - {formatTime12Hour(conflictData.endTime)}
+                  </span>{" "}
+                  on this date.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-2.5 border-t border-amber-200/80 text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-800">
+                <Lightbulb className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                <span>Hints: Select a different room or adjust the time slot before {formatTime12Hour(conflictData.startTime)} or after {formatTime12Hour(conflictData.endTime)}.</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isSlotAvailable && !conflictData && !error && (
+          <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2.5 shadow-xs animate-in fade-in">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+            <span className="font-semibold">
+              ✨ Great news! This room is completely available for {formatTime12Hour(startTime)} - {formatTime12Hour(endTime)}.
+            </span>
           </div>
         )}
 

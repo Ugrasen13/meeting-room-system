@@ -10,12 +10,15 @@ import {
   MapPin,
   Users,
   AlertCircle,
+  AlertTriangle,
+  Lightbulb,
+  Sparkles,
   CheckCircle2,
   Loader2,
   ChevronRight,
 } from "lucide-react";
 import { RoomData, SessionUser } from "@/types";
-import { getTodayString } from "@/lib/meetingStatus";
+import { getTodayString, formatTime12Hour, formatDateDisplay } from "@/lib/meetingStatus";
 
 export default function CreateMeetingPage() {
   const router = useRouter();
@@ -31,7 +34,13 @@ export default function CreateMeetingPage() {
   const [endTime, setEndTime] = useState("15:00");
 
   const [error, setError] = useState("");
-  const [conflictWarning, setConflictWarning] = useState<string | null>(null);
+  const [conflictData, setConflictData] = useState<{
+    title: string;
+    startTime: string;
+    endTime: string;
+    roomNumber: string;
+  } | null>(null);
+  const [isSlotAvailable, setIsSlotAvailable] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -72,12 +81,14 @@ export default function CreateMeetingPage() {
     let active = true;
     async function checkConflict() {
       if (!roomId || !meetingDate || !startTime || !endTime) {
-        setConflictWarning(null);
+        setConflictData(null);
+        setIsSlotAvailable(false);
         return;
       }
 
       if (endTime <= startTime) {
-        setConflictWarning("End time must be later than start time.");
+        setConflictData(null);
+        setIsSlotAvailable(false);
         return;
       }
 
@@ -91,11 +102,17 @@ export default function CreateMeetingPage() {
           );
           if (!active) return;
           if (overlap) {
-            setConflictWarning(
-              `Conflict Warning: Already booked for "${overlap.title}" (${overlap.startTime} - ${overlap.endTime})`
-            );
+            const selectedRoom = rooms.find((r) => r.id === roomId);
+            setConflictData({
+              title: overlap.title,
+              startTime: overlap.startTime,
+              endTime: overlap.endTime,
+              roomNumber: selectedRoom ? `${selectedRoom.roomNumber} (${selectedRoom.roomName})` : "This room",
+            });
+            setIsSlotAvailable(false);
           } else {
-            setConflictWarning(null);
+            setConflictData(null);
+            setIsSlotAvailable(true);
           }
         }
       } catch (err) {
@@ -106,7 +123,7 @@ export default function CreateMeetingPage() {
     return () => {
       active = false;
     };
-  }, [roomId, meetingDate, startTime, endTime]);
+  }, [roomId, meetingDate, startTime, endTime, rooms]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,10 +236,42 @@ export default function CreateMeetingPage() {
           </div>
         )}
 
-        {conflictWarning && !error && (
-          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center gap-3 animate-in fade-in">
-            <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-            <span>{conflictWarning}</span>
+        {conflictData && !error && (
+          <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50/60 to-amber-50 border-2 border-amber-300 text-amber-900 shadow-xs space-y-3 animate-in fade-in">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
+                <AlertTriangle className="w-4 h-4" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-bold text-amber-900 flex items-center gap-2">
+                  <span>Room Booking Conflict Detected</span>
+                </h4>
+                <p className="text-xs text-amber-800 mt-1 leading-relaxed">
+                  <strong>{conflictData.roomNumber}</strong> is already booked for{" "}
+                  <span className="font-semibold text-amber-950">&ldquo;{conflictData.title}&rdquo;</span> from{" "}
+                  <span className="font-mono font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded">
+                    {formatTime12Hour(conflictData.startTime)} - {formatTime12Hour(conflictData.endTime)}
+                  </span>{" "}
+                  on this date.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-2.5 border-t border-amber-200/80 text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-800">
+                <Lightbulb className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                <span>Hints: Select a different room (e.g. Room 102 / 103) or choose a time slot before {formatTime12Hour(conflictData.startTime)} or after {formatTime12Hour(conflictData.endTime)}.</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isSlotAvailable && !conflictData && !error && (
+          <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2.5 shadow-xs animate-in fade-in">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+            <span className="font-semibold">
+              ✨ Great news! This room is completely available for {formatTime12Hour(startTime)} - {formatTime12Hour(endTime)}.
+            </span>
           </div>
         )}
 
