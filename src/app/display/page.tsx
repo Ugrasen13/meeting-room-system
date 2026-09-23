@@ -316,11 +316,15 @@ export default function AllRoomsLiveDisplay() {
     },
   ];
 
+  // View Mode: "rooms" (All rooms with slots) vs "slots" (Scheduled meeting slots only)
+  const [viewMode, setViewMode] = useState<"rooms" | "slots">("rooms");
+
   // History / Range mode checks
   const isDateRange = startDate !== endDate;
   const isHistoryMode =
     isDateRange || (mounted && startDate !== getTodayString());
-  const itemsToDisplay = isDateRange ? allMeetings : rooms;
+  const showSlotsOnly = isDateRange || viewMode === "slots";
+  const itemsToDisplay = showSlotsOnly ? allMeetings : rooms;
   const totalItemsCount = itemsToDisplay.length;
 
   // Maximum 6 shown initially, unless user clicked "See More"
@@ -339,7 +343,7 @@ export default function AllRoomsLiveDisplay() {
 
       {/* Top Floating Controls Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-4 z-30 relative">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
           <Link
             href="/dashboard"
             className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700/80 shadow-lg backdrop-blur-md transition group"
@@ -348,7 +352,33 @@ export default function AllRoomsLiveDisplay() {
             <span>Dashboard</span>
           </Link>
 
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-950/50 border border-emerald-800/60 text-emerald-400 text-xs font-semibold backdrop-blur-md">
+          {/* View Mode Toggle: Rooms vs Scheduled Slots */}
+          <div className="inline-flex p-0.5 rounded-xl bg-slate-900/90 border border-slate-700/80 shadow-md">
+            <button
+              type="button"
+              onClick={() => setViewMode("rooms")}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                !showSlotsOnly
+                  ? "bg-indigo-600 text-white shadow"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <span>🏢 Rooms & Slots</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("slots")}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                showSlotsOnly
+                  ? "bg-indigo-600 text-white shadow"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <span>📅 Meeting Slots ({allMeetings.length})</span>
+            </button>
+          </div>
+
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-950/50 border border-emerald-800/60 text-emerald-400 text-xs font-semibold backdrop-blur-md">
             <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
             <span>Live Workspace Broadcast</span>
           </div>
@@ -806,38 +836,82 @@ export default function AllRoomsLiveDisplay() {
                         <Users className="w-10 h-10" />
                       </Link>
 
-                      {/* Meeting Details */}
-                      <div className="flex-1 flex flex-col justify-center my-2 space-y-1.5 w-full">
-                        {item.displayMeeting ? (
-                          <>
-                            <h3 className="text-lg sm:text-xl font-black text-white leading-snug line-clamp-2 px-1">
-                              {item.displayMeeting.title}
-                            </h3>
-                            <div className="inline-flex items-center justify-center gap-1.5 font-mono text-xs sm:text-sm font-bold text-amber-200 bg-amber-500/15 border border-amber-500/30 px-3 py-1 rounded-xl mx-auto">
-                              <Clock className="w-3.5 h-3.5 text-amber-400" />
-                              <span>
-                                {formatTime12Hour(item.displayMeeting.startTime)} -{" "}
-                                {formatTime12Hour(item.displayMeeting.endTime)}
+                      {/* Meeting Details & Scheduled Slots for this Date */}
+                      <div className="flex-1 flex flex-col justify-center my-2 space-y-2 w-full">
+                        {item.todayMeetings && item.todayMeetings.length > 0 ? (
+                          <div className="w-full space-y-1.5">
+                            <div className="flex items-center justify-between px-1 border-b border-white/10 pb-1">
+                              <span className="text-[10px] font-black uppercase tracking-wider text-cyan-300">
+                                📅 Meeting Slots ({item.todayMeetings.length})
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-medium">
+                                {formatDateDisplay(startDate)}
                               </span>
                             </div>
-                            {item.displayMeeting.organizer && (
-                              <p className="text-[11px] font-medium text-slate-300">
-                                Host: <span className="text-white font-bold">{item.displayMeeting.organizer}</span>
-                              </p>
-                            )}
-                          </>
+
+                            <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+                              {item.todayMeetings.map((m: any) => {
+                                const isMStart = m.status === "ONGOING";
+                                const isMUpcoming = m.status === "UPCOMING";
+
+                                return (
+                                  <div
+                                    key={m.id}
+                                    className={`p-2 rounded-xl border text-left transition ${
+                                      isMStart
+                                        ? "bg-emerald-950/80 border-emerald-500/80 shadow-[0_0_12px_rgba(16,185,129,0.3)]"
+                                        : isMUpcoming
+                                        ? "bg-amber-950/70 border-amber-500/70 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+                                        : "bg-slate-900/90 border-slate-700/80"
+                                    }`}
+                                  >
+                                    <div className="flex items-start justify-between gap-1.5">
+                                      <h4 className="text-xs font-bold text-white truncate flex-1 leading-tight">
+                                        {m.title}
+                                      </h4>
+                                      <span
+                                        className={`text-[8px] font-black uppercase px-1.5 py-0.2 rounded shrink-0 ${
+                                          isMStart
+                                            ? "bg-emerald-500 text-slate-950 animate-pulse"
+                                            : isMUpcoming
+                                            ? "bg-amber-500 text-slate-950"
+                                            : "bg-slate-800 text-slate-400"
+                                        }`}
+                                      >
+                                        {m.status}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex items-center justify-between mt-1 text-[10px] text-slate-300">
+                                      <div className="inline-flex items-center gap-1 font-mono font-bold text-amber-200">
+                                        <Clock className="w-3 h-3 text-amber-400" />
+                                        <span>
+                                          {formatTime12Hour(m.startTime)} - {formatTime12Hour(m.endTime)}
+                                        </span>
+                                      </div>
+                                      {m.organizer && (
+                                        <span className="text-slate-400 truncate max-w-[85px] text-[10px]">
+                                          {m.organizer}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
                         ) : (
-                          <>
+                          <div className="py-3 text-center space-y-1">
                             <h3 className="text-lg sm:text-xl font-black text-teal-200">
                               {item.room.roomName}
                             </h3>
                             <p className="text-xs text-slate-300 font-medium">
-                              No active meetings
+                              No meeting slots booked on this date
                             </p>
-                            <p className="text-[11px] text-teal-400 font-semibold mt-1">
-                              ✨ Ready for immediate booking
+                            <p className="text-[11px] text-teal-400 font-semibold">
+                              ✨ Free all day • Ready for booking
                             </p>
-                          </>
+                          </div>
                         )}
                       </div>
 
