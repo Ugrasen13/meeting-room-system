@@ -19,6 +19,7 @@ import {
   ArrowRight,
   Layers,
   Plus,
+  AlertCircle,
 } from "lucide-react";
 import { TimeSimulator } from "@/components/ui/TimeSimulator";
 import {
@@ -180,6 +181,82 @@ export default function AllRoomsLiveDisplay() {
     setSimulatedDate("");
     setDatePickerOpen(false);
     fetchDisplay(today, today, "");
+  };
+
+  // Quick Create Meeting Modal Popup State
+  const [selectedRoomForBooking, setSelectedRoomForBooking] = useState<RoomDisplayItem | null>(null);
+  const [bookTitle, setBookTitle] = useState("");
+  const [bookOrganizer, setBookOrganizer] = useState("CABS DRDO Admin");
+  const [bookDate, setBookDate] = useState(startDate);
+  const [bookStartTime, setBookStartTime] = useState("14:00");
+  const [bookEndTime, setBookEndTime] = useState("15:00");
+  const [bookDescription, setBookDescription] = useState("");
+  const [bookError, setBookError] = useState("");
+  const [bookSuccess, setBookSuccess] = useState(false);
+  const [bookSubmitting, setBookSubmitting] = useState(false);
+
+  const handleOpenBookingModal = (item: RoomDisplayItem) => {
+    setSelectedRoomForBooking(item);
+    setBookTitle("");
+    setBookOrganizer("CABS DRDO Admin");
+    setBookDate(startDate || getTodayString());
+    const now = new Date();
+    const currentH = now.getHours();
+    const startH = String((currentH + 1) % 24).padStart(2, "0");
+    const endH = String((currentH + 2) % 24).padStart(2, "0");
+    setBookStartTime(`${startH}:00`);
+    setBookEndTime(`${endH}:00`);
+    setBookDescription("");
+    setBookError("");
+    setBookSuccess(false);
+  };
+
+  const handleCreateMeetingSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRoomForBooking) return;
+    if (!bookTitle.trim()) {
+      setBookError("Meeting title is required.");
+      return;
+    }
+    if (bookEndTime <= bookStartTime) {
+      setBookError("End time must be after start time.");
+      return;
+    }
+
+    try {
+      setBookSubmitting(true);
+      setBookError("");
+      const res = await fetch("/api/meetings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: bookTitle.trim(),
+          organizer: bookOrganizer.trim() || "CABS DRDO Admin",
+          description: bookDescription.trim(),
+          roomId: selectedRoomForBooking.room.id,
+          meetingDate: bookDate,
+          startTime: bookStartTime,
+          endTime: bookEndTime,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setBookError(data.error || "Failed to create meeting.");
+      } else {
+        setBookSuccess(true);
+        // Refresh display data
+        fetchDisplay(startDate, endDate, simulatedTime);
+        setTimeout(() => {
+          setSelectedRoomForBooking(null);
+          setBookSuccess(false);
+        }, 1500);
+      }
+    } catch (err: any) {
+      setBookError("Network error. Could not create meeting.");
+    } finally {
+      setBookSubmitting(false);
+    }
   };
 
   const handleTimeChange = (time: string, date: string, live: boolean) => {
@@ -783,19 +860,21 @@ export default function AllRoomsLiveDisplay() {
                             <span>UPCOMING</span>
                           </Link>
                         ) : isAvailable ? (
-                          <Link
-                            href={`/meetings/create?roomId=${item.room.id}&date=${startDate}`}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenBookingModal(item)}
                             className="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 font-black tracking-wider text-xs sm:text-sm shadow-[0_0_25px_rgba(6,182,212,0.6)] flex items-center justify-center gap-2 transition-all duration-200 transform hover:scale-[1.03] active:scale-95 cursor-pointer group/btn"
-                            title={`Create a meeting in ${item.room.roomNumber}`}
+                            title={`Click to open meeting creation window for ${item.room.roomNumber}`}
                           >
-                            <Plus className="w-4 h-4 text-slate-950 group-hover/btn:rotate-90 transition-transform duration-200" />
+                            <Sparkles className="w-4 h-4 text-slate-950 group-hover/btn:scale-110 transition-transform" />
                             <span>AVAILABLE • CREATE MEETING</span>
-                          </Link>
+                          </button>
                         ) : (
-                          <Link
-                            href={`/meetings/create?roomId=${item.room.id}&date=${startDate}`}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenBookingModal(item)}
                             className="w-full py-2 px-3 rounded-2xl bg-slate-800/90 hover:bg-emerald-950/90 border border-cyan-500/40 hover:border-emerald-400 text-cyan-300 hover:text-emerald-300 font-bold tracking-wider text-xs flex flex-col items-center justify-center gap-0.5 shadow-md transition-all duration-200 transform hover:scale-[1.02] cursor-pointer group/avail"
-                            title={`Book ${item.room.roomNumber} now`}
+                            title={`Click to book ${item.room.roomNumber} immediately`}
                           >
                             <span className="text-[10px] uppercase font-bold text-slate-400">
                               Previous Meeting Completed
@@ -804,7 +883,7 @@ export default function AllRoomsLiveDisplay() {
                               <Plus className="w-3.5 h-3.5 text-emerald-400 group-hover/avail:rotate-90 transition-transform" />
                               <span>AVAILABLE NOW • CREATE MEETING</span>
                             </span>
-                          </Link>
+                          </button>
                         )}
                       </div>
                     </div>
@@ -838,6 +917,166 @@ export default function AllRoomsLiveDisplay() {
           </div>
         )}
       </main>
+
+      {/* Quick Create Meeting Modal Popup Window */}
+      {selectedRoomForBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in">
+          <div className="w-full max-w-lg bg-slate-900 border-2 border-cyan-500/70 rounded-3xl p-6 sm:p-7 shadow-[0_0_50px_rgba(6,182,212,0.3)] text-white relative animate-in zoom-in-95">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between pb-4 border-b border-slate-800">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-emerald-400 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-500/40">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Room Available
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    👥 {selectedRoomForBooking.room.capacity} seats
+                  </span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-black text-white mt-1 uppercase font-mono tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-white">
+                  {selectedRoomForBooking.room.roomNumber}
+                </h2>
+                <p className="text-xs font-semibold text-cyan-200">
+                  {selectedRoomForBooking.room.roomName} • {selectedRoomForBooking.room.location}
+                </p>
+              </div>
+
+              <button
+                onClick={() => setSelectedRoomForBooking(null)}
+                className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer"
+                title="Close window"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {bookSuccess ? (
+              <div className="py-12 text-center space-y-3">
+                <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center mx-auto animate-bounce">
+                  <CheckCircle2 className="w-10 h-10" />
+                </div>
+                <h3 className="text-xl font-black text-white">Meeting Scheduled!</h3>
+                <p className="text-xs text-emerald-300">
+                  Successfully created meeting in {selectedRoomForBooking.room.roomNumber}.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleCreateMeetingSubmit} className="space-y-4 pt-4">
+                {bookError && (
+                  <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-500/50 text-rose-300 text-xs font-medium flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                    <span>{bookError}</span>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-[11px] font-extrabold uppercase text-slate-400 tracking-wider mb-1">
+                    Meeting Title *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Project Review & Discussion"
+                    value={bookTitle}
+                    onChange={(e) => setBookTitle(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs font-semibold text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-extrabold uppercase text-slate-400 tracking-wider mb-1">
+                      Organizer *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={bookOrganizer}
+                      onChange={(e) => setBookOrganizer(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-medium text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-extrabold uppercase text-slate-400 tracking-wider mb-1">
+                      Date *
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={bookDate}
+                      onChange={(e) => setBookDate(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-mono text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-extrabold uppercase text-slate-400 tracking-wider mb-1">
+                      Start Time *
+                    </label>
+                    <input
+                      type="time"
+                      required
+                      value={bookStartTime}
+                      onChange={(e) => setBookStartTime(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-mono text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-extrabold uppercase text-slate-400 tracking-wider mb-1">
+                      End Time *
+                    </label>
+                    <input
+                      type="time"
+                      required
+                      value={bookEndTime}
+                      onChange={(e) => setBookEndTime(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-mono text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-800">
+                  <Link
+                    href={`/meetings/create?roomId=${selectedRoomForBooking.room.id}&date=${bookDate}`}
+                    className="text-xs font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                  >
+                    <span>Full Create Form</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedRoomForBooking(null)}
+                      className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={bookSubmitting}
+                      className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-black text-xs shadow-[0_0_20px_rgba(6,182,212,0.4)] transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {bookSubmitting ? (
+                        <span className="animate-spin">⏳</span>
+                      ) : (
+                        <Plus className="w-4 h-4 text-slate-950" />
+                      )}
+                      <span>Create Meeting</span>
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Footer Banner */}
       <footer className="pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 z-10 relative">
