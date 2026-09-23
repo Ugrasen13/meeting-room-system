@@ -18,6 +18,7 @@ import {
   X,
   ArrowRight,
   Layers,
+  Plus,
 } from "lucide-react";
 import { TimeSimulator } from "@/components/ui/TimeSimulator";
 import {
@@ -681,38 +682,52 @@ export default function AllRoomsLiveDisplay() {
                   }
 
                   return (
-                    <Link
+                    <div
                       key={item.room.id}
-                      href={`/display/${item.room.roomNumber}`}
-                      className={`relative rounded-3xl p-6 sm:p-7 border-2 flex flex-col items-center justify-between text-center transition-all duration-300 transform hover:-translate-y-2 hover:scale-[1.02] cursor-pointer min-h-[390px] backdrop-blur-xl ${borderStyle} ${glowStyle} ${cardBg} group`}
+                      className={`relative rounded-3xl p-6 sm:p-7 border-2 flex flex-col items-center justify-between text-center transition-all duration-300 transform hover:-translate-y-2 hover:scale-[1.02] min-h-[400px] backdrop-blur-xl ${borderStyle} ${glowStyle} ${cardBg} group`}
                     >
-                      {/* Top Info Bar: Location & Capacity */}
+                      {/* Top Info Bar: Location & Capacity + TV View Link */}
                       <div className="w-full pb-3 border-b border-white/10 flex items-center justify-between">
                         <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/10 text-slate-200 border border-white/10 flex items-center gap-1">
                           <MapPin className="w-3 h-3 text-slate-400" />
                           {item.room.location}
                         </span>
-                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-white/5 text-slate-300 border border-white/5">
-                          👥 {item.room.capacity} seats
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-white/5 text-slate-300 border border-white/5">
+                            👥 {item.room.capacity} seats
+                          </span>
+                          <Link
+                            href={`/display/${item.room.roomNumber}`}
+                            className="p-1 rounded-lg text-slate-400 hover:text-cyan-300 hover:bg-white/10 transition"
+                            title={`Open Fullscreen TV Display for ${item.room.roomNumber}`}
+                          >
+                            <Tv className="w-3.5 h-3.5" />
+                          </Link>
+                        </div>
                       </div>
 
                       {/* Room Number Header */}
-                      <div className="mt-3 flex items-center gap-2">
-                        <h2 className="text-2xl font-black tracking-wider uppercase font-mono text-white group-hover:text-cyan-300 transition drop-shadow">
+                      <Link
+                        href={`/display/${item.room.roomNumber}`}
+                        className="mt-3 flex flex-col items-center group/room cursor-pointer"
+                        title="Click to view Room TV Screen"
+                      >
+                        <h2 className="text-2xl font-black tracking-wider uppercase font-mono text-white group-hover/room:text-cyan-300 transition drop-shadow">
                           {item.room.roomNumber}
                         </h2>
-                      </div>
-                      <p className="text-xs font-semibold text-slate-300">
-                        {item.room.roomName}
-                      </p>
+                        <p className="text-xs font-semibold text-slate-300 group-hover/room:text-cyan-200 transition">
+                          {item.room.roomName}
+                        </p>
+                      </Link>
 
                       {/* Central Avatar Icon */}
-                      <div
-                        className={`w-20 h-20 rounded-2xl flex items-center justify-center my-3 transition-transform duration-300 group-hover:scale-110 ${palette.iconBg}`}
+                      <Link
+                        href={`/display/${item.room.roomNumber}`}
+                        className={`w-20 h-20 rounded-2xl flex items-center justify-center my-3 transition-transform duration-300 group-hover:scale-110 cursor-pointer ${palette.iconBg}`}
+                        title="Click to view Room TV Screen"
                       >
                         <Users className="w-10 h-10" />
-                      </div>
+                      </Link>
 
                       {/* Meeting Details */}
                       <div className="flex-1 flex flex-col justify-center my-2 space-y-1.5 w-full">
@@ -749,36 +764,50 @@ export default function AllRoomsLiveDisplay() {
                         )}
                       </div>
 
-                      {/* Status Banner */}
+                      {/* Status & Action Banner */}
                       <div className="w-full pt-3 mt-2 border-t border-white/10">
                         {isOngoing ? (
-                          <div className="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black tracking-widest text-sm sm:text-base shadow-[0_0_25px_rgba(16,185,129,0.6)] flex items-center justify-center gap-2 animate-pulse">
+                          <Link
+                            href={`/display/${item.room.roomNumber}`}
+                            className="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black tracking-widest text-sm sm:text-base shadow-[0_0_25px_rgba(16,185,129,0.6)] flex items-center justify-center gap-2 animate-pulse hover:opacity-95 transition"
+                          >
                             <span className="w-2.5 h-2.5 rounded-full bg-white"></span>
                             <span>ONGOING</span>
-                          </div>
+                          </Link>
                         ) : isUpcoming ? (
-                          <div className="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black tracking-widest text-sm sm:text-base shadow-[0_0_25px_rgba(245,158,11,0.5)] flex items-center justify-center gap-2">
+                          <Link
+                            href={`/display/${item.room.roomNumber}`}
+                            className="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black tracking-widest text-sm sm:text-base shadow-[0_0_25px_rgba(245,158,11,0.5)] flex items-center justify-center gap-2 hover:opacity-95 transition"
+                          >
                             <Clock className="w-4 h-4 text-slate-950" />
                             <span>UPCOMING</span>
-                          </div>
+                          </Link>
                         ) : isAvailable ? (
-                          <div className="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-950 font-black tracking-widest text-sm sm:text-base shadow-[0_0_25px_rgba(6,182,212,0.5)] flex items-center justify-center gap-2">
-                            <Sparkles className="w-4 h-4 text-slate-950" />
-                            <span>AVAILABLE</span>
-                          </div>
+                          <Link
+                            href={`/meetings/create?roomId=${item.room.id}&date=${startDate}`}
+                            className="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 font-black tracking-wider text-xs sm:text-sm shadow-[0_0_25px_rgba(6,182,212,0.6)] flex items-center justify-center gap-2 transition-all duration-200 transform hover:scale-[1.03] active:scale-95 cursor-pointer group/btn"
+                            title={`Create a meeting in ${item.room.roomNumber}`}
+                          >
+                            <Plus className="w-4 h-4 text-slate-950 group-hover/btn:rotate-90 transition-transform duration-200" />
+                            <span>AVAILABLE • CREATE MEETING</span>
+                          </Link>
                         ) : (
-                          <div className="w-full py-2 px-3 rounded-2xl bg-slate-800/90 border border-cyan-500/40 text-cyan-300 font-bold tracking-wider text-xs flex flex-col items-center justify-center gap-0.5 shadow-md">
+                          <Link
+                            href={`/meetings/create?roomId=${item.room.id}&date=${startDate}`}
+                            className="w-full py-2 px-3 rounded-2xl bg-slate-800/90 hover:bg-emerald-950/90 border border-cyan-500/40 hover:border-emerald-400 text-cyan-300 hover:text-emerald-300 font-bold tracking-wider text-xs flex flex-col items-center justify-center gap-0.5 shadow-md transition-all duration-200 transform hover:scale-[1.02] cursor-pointer group/avail"
+                            title={`Book ${item.room.roomNumber} now`}
+                          >
                             <span className="text-[10px] uppercase font-bold text-slate-400">
-                              Completed
+                              Previous Meeting Completed
                             </span>
-                            <span className="text-emerald-400 font-black flex items-center gap-1">
-                              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                              AVAILABLE NOW
+                            <span className="text-emerald-400 font-black flex items-center gap-1.5">
+                              <Plus className="w-3.5 h-3.5 text-emerald-400 group-hover/avail:rotate-90 transition-transform" />
+                              <span>AVAILABLE NOW • CREATE MEETING</span>
                             </span>
-                          </div>
+                          </Link>
                         )}
                       </div>
-                    </Link>
+                    </div>
                   );
                 })}
           </div>

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AppLayout } from "@/components/layout/AppLayout";
 import {
   Calendar,
@@ -20,8 +20,12 @@ import {
 import { RoomData, SessionUser } from "@/types";
 import { getTodayString, formatTime12Hour, formatDateDisplay } from "@/lib/meetingStatus";
 
-export default function CreateMeetingPage() {
+function CreateMeetingForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const paramRoomId = searchParams.get("roomId");
+  const paramDate = searchParams.get("date");
+
   const [rooms, setRooms] = useState<RoomData[]>([]);
   const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
 
@@ -29,7 +33,7 @@ export default function CreateMeetingPage() {
   const [organizer, setOrganizer] = useState("");
   const [description, setDescription] = useState("");
   const [roomId, setRoomId] = useState("");
-  const [meetingDate, setMeetingDate] = useState(getTodayString());
+  const [meetingDate, setMeetingDate] = useState(paramDate || getTodayString());
   const [startTime, setStartTime] = useState("14:00");
   const [endTime, setEndTime] = useState("15:00");
 
@@ -66,7 +70,10 @@ export default function CreateMeetingPage() {
           );
           setRooms(activeRooms);
           if (activeRooms.length > 0) {
-            setRoomId(activeRooms[0].id);
+            const matchingRoom = activeRooms.find(
+              (r: RoomData) => r.id === paramRoomId || r.roomNumber === paramRoomId
+            );
+            setRoomId(matchingRoom ? matchingRoom.id : activeRooms[0].id);
           }
         }
       } catch (e) {
@@ -74,7 +81,7 @@ export default function CreateMeetingPage() {
       }
     }
     init();
-  }, [router]);
+  }, [router, paramRoomId]);
 
   // Pre-validate conflict whenever room, date, or times change
   useEffect(() => {
@@ -418,5 +425,22 @@ export default function CreateMeetingPage() {
         </div>
       </div>
     </AppLayout>
+  );
+}
+
+export default function CreateMeetingPage() {
+  return (
+    <Suspense
+      fallback={
+        <AppLayout>
+          <div className="py-20 flex flex-col items-center justify-center gap-2">
+            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+            <p className="text-xs text-slate-400 font-medium">Loading form...</p>
+          </div>
+        </AppLayout>
+      }
+    >
+      <CreateMeetingForm />
+    </Suspense>
   );
 }
