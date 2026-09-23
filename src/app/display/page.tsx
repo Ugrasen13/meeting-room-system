@@ -316,8 +316,8 @@ export default function AllRoomsLiveDisplay() {
     },
   ];
 
-  // View Mode: "rooms" (All rooms with slots) vs "slots" (Scheduled meeting slots only)
-  const [viewMode, setViewMode] = useState<"rooms" | "slots">("rooms");
+  // View Mode: "slots" (Scheduled meeting slots only - DEFAULT) vs "rooms" (All rooms)
+  const [viewMode, setViewMode] = useState<"slots" | "rooms">("slots");
 
   // History / Range mode checks
   const isDateRange = startDate !== endDate;
@@ -352,29 +352,30 @@ export default function AllRoomsLiveDisplay() {
             <span>Dashboard</span>
           </Link>
 
-          {/* View Mode Toggle: Rooms vs Scheduled Slots */}
+          {/* View Mode Toggle: Scheduled Slots Only vs All Rooms */}
           <div className="inline-flex p-0.5 rounded-xl bg-slate-900/90 border border-slate-700/80 shadow-md">
             <button
               type="button"
+              onClick={() => setViewMode("slots")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                showSlotsOnly
+                  ? "bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-md shadow-cyan-500/20"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <CalendarIcon className="w-3.5 h-3.5" />
+              <span>📅 Only Meetings ({allMeetings.length})</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setViewMode("rooms")}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
                 !showSlotsOnly
                   ? "bg-indigo-600 text-white shadow"
                   : "text-slate-400 hover:text-white"
               }`}
             >
-              <span>🏢 Rooms & Slots</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("slots")}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                showSlotsOnly
-                  ? "bg-indigo-600 text-white shadow"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <span>📅 Meeting Slots ({allMeetings.length})</span>
+              <span>🏢 All Rooms ({rooms.length})</span>
             </button>
           </div>
 
@@ -668,17 +669,50 @@ export default function AllRoomsLiveDisplay() {
       {/* Main Grid: Maximum 6 shown initially */}
       <main className="my-auto py-4 z-10 relative">
         {itemsToDisplay.length === 0 ? (
-          <div className="py-24 text-center text-slate-400 space-y-3">
-            <CalendarIcon className="w-12 h-12 text-slate-600 mx-auto" />
-            <h3 className="text-xl font-bold text-white">No meetings found between these dates</h3>
-            <p className="text-xs text-slate-500">
-              Try selecting a different date or date range above.
-            </p>
+          <div className="py-20 text-center max-w-lg mx-auto p-8 rounded-3xl bg-slate-900/90 border-2 border-slate-800 backdrop-blur-xl shadow-2xl space-y-5 animate-in fade-in">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/40 flex items-center justify-center mx-auto">
+              <CalendarIcon className="w-8 h-8 text-indigo-300" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-black text-white">No Scheduled Meetings</h3>
+              <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                There are no meetings booked on{" "}
+                <span className="font-bold text-cyan-300">
+                  {formatDateDisplay(startDate)}
+                </span>
+                .
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (rooms.length > 0) handleOpenBookingModal(rooms[0]);
+                }}
+                className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 font-black text-xs shadow-lg shadow-cyan-500/30 transition flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Plus className="w-4 h-4 text-slate-950" />
+                <span>+ Schedule Meeting</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setStartDate("2026-08-27");
+                  setEndDate("2026-08-27");
+                  setTempStartDate("2026-08-27");
+                  setTempEndDate("2026-08-27");
+                  fetchDisplay("2026-08-27", "2026-08-27");
+                }}
+                className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs border border-slate-700 transition flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>📅 View 27 Aug (Demo)</span>
+              </button>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-            {/* If isDateRange: render Meeting Cards */}
-            {isDateRange
+            {/* If showSlotsOnly: render Meeting Cards */}
+            {showSlotsOnly
               ? (visibleItems as MeetingData[]).map((meeting, idx) => {
                   const palette = roomPalettes[idx % roomPalettes.length];
                   const isOngoing = meeting.status === "ONGOING";
@@ -767,7 +801,7 @@ export default function AllRoomsLiveDisplay() {
                     </Link>
                   );
                 })
-              : /* Single Date: render Room Display Cards */
+              : /* Single Date (Rooms View Mode): render Room Display Cards */
                 (visibleItems as RoomDisplayItem[]).map((item, idx) => {
                   const palette = roomPalettes[idx % roomPalettes.length];
                   const isOngoing = item.status === "ONGOING";
