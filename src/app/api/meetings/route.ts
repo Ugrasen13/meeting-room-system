@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
     const roomId = searchParams.get("roomId");
     const statusFilter = searchParams.get("status");
     const search = searchParams.get("search");
+    const sort = searchParams.get("sort") || "latest";
     const refTime = searchParams.get("time") || getCurrentTimeString();
     const refDate = searchParams.get("refDate") || getTodayString();
 
@@ -36,12 +37,22 @@ export async function GET(req: NextRequest) {
       ];
     }
 
+    let orderByClause: any[] = [{ meetingDate: "desc" }, { startTime: "desc" }];
+    if (sort === "earliest" || sort === "oldest" || sort === "asc") {
+      orderByClause = [{ meetingDate: "asc" }, { startTime: "asc" }];
+    } else if (sort === "title_asc") {
+      orderByClause = [{ title: "asc" }, { meetingDate: "desc" }];
+    } else {
+      // Default: latest meeting date first
+      orderByClause = [{ meetingDate: "desc" }, { startTime: "desc" }];
+    }
+
     const meetings = await prisma.meeting.findMany({
       where: whereClause,
       include: {
         room: true,
       },
-      orderBy: [{ meetingDate: "asc" }, { startTime: "asc" }],
+      orderBy: orderByClause,
     });
 
     // Compute dynamic status for each meeting

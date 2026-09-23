@@ -15,6 +15,9 @@ import {
   Loader2,
   AlertCircle,
   X,
+  ArrowUpDown,
+  ArrowDown,
+  ArrowUp,
 } from "lucide-react";
 import { MeetingData, RoomData, SessionUser } from "@/types";
 import { formatTime12Hour, formatDateDisplay } from "@/lib/meetingStatus";
@@ -25,11 +28,12 @@ export default function MeetingsPage() {
   const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Filters
+  // Filters & Sorting (Default: Latest meeting coming first!)
   const [search, setSearch] = useState("");
   const [selectedRoom, setSelectedRoom] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedDate, setSelectedDate] = useState("");
+  const [selectedSort, setSelectedSort] = useState("latest");
 
   // Delete modal state
   const [meetingToDelete, setMeetingToDelete] = useState<MeetingData | null>(null);
@@ -55,6 +59,7 @@ export default function MeetingsPage() {
       if (selectedRoom !== "all") params.set("roomId", selectedRoom);
       if (selectedStatus !== "all") params.set("status", selectedStatus);
       if (selectedDate) params.set("date", selectedDate);
+      if (selectedSort) params.set("sort", selectedSort);
       const q = params.toString() ? `?${params.toString()}` : "";
 
       const res = await fetch(`/api/meetings${q}`);
@@ -88,7 +93,7 @@ export default function MeetingsPage() {
 
   useEffect(() => {
     fetchMeetings();
-  }, [search, selectedRoom, selectedStatus, selectedDate]);
+  }, [search, selectedRoom, selectedStatus, selectedDate, selectedSort]);
 
   const handleDelete = async () => {
     if (!meetingToDelete) return;
@@ -138,7 +143,7 @@ export default function MeetingsPage() {
           )}
         </div>
 
-        {/* Filter Bar (Matching Mockup 3) */}
+        {/* Filter Bar (Matching Mockup 3 + Sort Filter) */}
         <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap items-center gap-3">
           {/* Search Box */}
           <div className="sm:col-span-2 lg:flex-1 lg:min-w-[200px] relative">
@@ -197,6 +202,21 @@ export default function MeetingsPage() {
             <option value="UPCOMING">Upcoming</option>
             <option value="COMPLETED">Completed</option>
           </select>
+
+          {/* Sort Filter: Latest Meeting First by default */}
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 hover:border-indigo-300 transition">
+            <ArrowUpDown className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
+            <select
+              value={selectedSort}
+              onChange={(e) => setSelectedSort(e.target.value)}
+              className="bg-transparent text-xs text-slate-700 font-semibold focus:outline-none cursor-pointer"
+              title="Sort meetings order"
+            >
+              <option value="latest">Latest Date First (Newest)</option>
+              <option value="earliest">Earliest Date First (Oldest)</option>
+              <option value="title_asc">Title (A to Z)</option>
+            </select>
+          </div>
         </div>
 
         {/* Meetings Table & Mobile Cards */}
@@ -289,7 +309,30 @@ export default function MeetingsPage() {
                     <tr className="bg-slate-50/80 border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
                       <th className="py-3.5 px-6">Meeting</th>
                       <th className="py-3.5 px-6">Room</th>
-                      <th className="py-3.5 px-6">Date</th>
+                      <th
+                        onClick={() =>
+                          setSelectedSort(
+                            selectedSort === "latest" ? "earliest" : "latest"
+                          )
+                        }
+                        className="py-3.5 px-6 cursor-pointer select-none hover:text-indigo-600 transition group"
+                        title="Click to toggle Latest/Earliest date sort"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span>Date</span>
+                          {selectedSort === "latest" ? (
+                            <span className="inline-flex items-center text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-200/60 px-1.5 py-0.5 rounded">
+                              Latest ↓
+                            </span>
+                          ) : selectedSort === "earliest" ? (
+                            <span className="inline-flex items-center text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-200/60 px-1.5 py-0.5 rounded">
+                              Earliest ↑
+                            </span>
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 text-slate-400 group-hover:text-indigo-600" />
+                          )}
+                        </div>
+                      </th>
                       <th className="py-3.5 px-6">Time</th>
                       <th className="py-3.5 px-6">Status</th>
                       <th className="py-3.5 px-6 text-right">Action</th>
