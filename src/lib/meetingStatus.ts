@@ -52,6 +52,26 @@ export function formatDateFull(dateStr: string): string {
 }
 
 /**
+ * Formats "2026-08-27" -> "Thursday, 27 August 2026"
+ */
+export function formatDateWithWeekday(dateStr: string): string {
+  if (!dateStr) return "";
+  try {
+    const parts = dateStr.split("-");
+    if (parts.length !== 3) return dateStr;
+    const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    return d.toLocaleDateString("en-US", {
+      weekday: "long",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return formatDateDisplay(dateStr);
+  }
+}
+
+/**
  * Returns today's date in "YYYY-MM-DD"
  */
 export function getTodayString(): string {
@@ -60,6 +80,19 @@ export function getTodayString(): string {
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+/**
+ * Returns today's date formatted nicely with weekday, e.g. "Wednesday, 23 Sep 2026"
+ */
+export function getTodayFormattedWithWeekday(): string {
+  const d = new Date();
+  return d.toLocaleDateString("en-US", {
+    weekday: "long",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 /**

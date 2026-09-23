@@ -20,7 +20,14 @@ import {
   Layers,
 } from "lucide-react";
 import { TimeSimulator } from "@/components/ui/TimeSimulator";
-import { formatTime12Hour, formatDateDisplay, formatDateFull } from "@/lib/meetingStatus";
+import {
+  formatTime12Hour,
+  formatDateDisplay,
+  formatDateFull,
+  formatDateWithWeekday,
+  getTodayString,
+  getTodayFormattedWithWeekday,
+} from "@/lib/meetingStatus";
 import { MeetingData } from "@/types";
 
 interface RoomDisplayItem {
@@ -42,6 +49,8 @@ interface RoomDisplayItem {
 export default function AllRoomsLiveDisplay() {
   const [rooms, setRooms] = useState<RoomDisplayItem[]>([]);
   const [allMeetings, setAllMeetings] = useState<MeetingData[]>([]);
+
+  // Initialize to today's date
   const [startDate, setStartDate] = useState("2026-08-27");
   const [endDate, setEndDate] = useState("2026-08-27");
 
@@ -54,6 +63,7 @@ export default function AllRoomsLiveDisplay() {
   const [showAll, setShowAll] = useState(false);
 
   const [currentTimeFormatted, setCurrentTimeFormatted] = useState("");
+  const [currentLiveDateFormatted, setCurrentLiveDateFormatted] = useState("");
   const [simulatedTime, setSimulatedTime] = useState("");
   const [simulatedDate, setSimulatedDate] = useState("");
   const [isLiveMode, setIsLiveMode] = useState(true);
@@ -63,13 +73,19 @@ export default function AllRoomsLiveDisplay() {
 
   useEffect(() => {
     setMounted(true);
+    const today = getTodayString();
+    setStartDate(today);
+    setEndDate(today);
+    setTempStartDate(today);
+    setTempEndDate(today);
+    setCurrentLiveDateFormatted(getTodayFormattedWithWeekday());
   }, []);
 
-  // Live ticking clock
+  // Live ticking clock & live date
   useEffect(() => {
     const updateClock = () => {
+      const now = new Date();
       if (isLiveMode) {
-        const now = new Date();
         let hours = now.getHours();
         const minutes = String(now.getMinutes()).padStart(2, "0");
         const seconds = String(now.getSeconds()).padStart(2, "0");
@@ -79,6 +95,14 @@ export default function AllRoomsLiveDisplay() {
           `${String(hours).padStart(2, "0")}:${minutes}:${seconds} ${period}`
         );
       }
+      setCurrentLiveDateFormatted(
+        now.toLocaleDateString("en-US", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      );
     };
 
     updateClock();
@@ -118,8 +142,10 @@ export default function AllRoomsLiveDisplay() {
   };
 
   useEffect(() => {
-    fetchDisplay(startDate, endDate, simulatedTime);
-  }, [startDate, endDate, simulatedTime]);
+    if (mounted) {
+      fetchDisplay(startDate, endDate, simulatedTime);
+    }
+  }, [startDate, endDate, simulatedTime, mounted]);
 
   // Auto-refresh polling every 15 seconds
   useEffect(() => {
@@ -140,6 +166,19 @@ export default function AllRoomsLiveDisplay() {
     }
     setShowAll(false); // Reset to max 6 on new date filter
     setDatePickerOpen(false);
+  };
+
+  const handleResetToLiveToday = () => {
+    const today = getTodayString();
+    setStartDate(today);
+    setEndDate(today);
+    setTempStartDate(today);
+    setTempEndDate(today);
+    setIsLiveMode(true);
+    setSimulatedTime("");
+    setSimulatedDate("");
+    setDatePickerOpen(false);
+    fetchDisplay(today, today, "");
   };
 
   const handleTimeChange = (time: string, date: string, live: boolean) => {
@@ -199,10 +238,10 @@ export default function AllRoomsLiveDisplay() {
     },
   ];
 
-  // Decide what items to show:
-  // If multiple dates selected (e.g. 27 Aug to 30 Aug), show meetings scheduled between those dates!
-  // If single date, show room cards (or meetings).
+  // History / Range mode checks
   const isDateRange = startDate !== endDate;
+  const isHistoryMode =
+    isDateRange || (mounted && startDate !== getTodayString());
   const itemsToDisplay = isDateRange ? allMeetings : rooms;
   const totalItemsCount = itemsToDisplay.length;
 
@@ -221,7 +260,7 @@ export default function AllRoomsLiveDisplay() {
       </div>
 
       {/* Top Floating Controls Bar */}
-      <div className="flex items-center justify-between gap-4 mb-4 z-30 relative">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-4 z-30 relative">
         <div className="flex items-center gap-3">
           <Link
             href="/dashboard"
@@ -231,9 +270,9 @@ export default function AllRoomsLiveDisplay() {
             <span>Dashboard</span>
           </Link>
 
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-950/50 border border-emerald-800/60 text-emerald-400 text-xs font-semibold backdrop-blur-md">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-950/50 border border-emerald-800/60 text-emerald-400 text-xs font-semibold backdrop-blur-md">
             <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-            <span>Live TV Broadcast</span>
+            <span>Live Workspace Broadcast</span>
           </div>
         </div>
 
@@ -248,17 +287,47 @@ export default function AllRoomsLiveDisplay() {
         </div>
       </div>
 
-      {/* Header with Date Range Filter Popover */}
-      <header className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 border-b border-slate-800/80 z-20 relative">
-        {/* Left: Glowing Digital Clock */}
-        <div className="flex items-center gap-3 bg-gradient-to-r from-slate-900/95 to-slate-900/80 border-2 border-cyan-500/50 px-5 py-2.5 rounded-2xl shadow-[0_0_25px_rgba(6,182,212,0.25)] backdrop-blur-md">
-          <Clock className="w-6 h-6 text-cyan-400 animate-pulse" />
-          <span
-            className="font-mono text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-teal-200 to-white tracking-widest"
-            suppressHydrationWarning
-          >
-            {mounted ? currentTimeFormatted || "02:35 PM" : "02:35 PM"}
-          </span>
+      {/* Header: Left = Today's Live Date & Clock | Center = Title | Right = History Meetings Button */}
+      <header className="flex flex-col lg:flex-row items-center justify-between gap-4 pb-6 border-b border-slate-800/80 z-20 relative">
+        {/* Left: Today's Live Date & Real-Time Digital Clock */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-slate-950 border-2 border-cyan-500/50 px-4 sm:px-5 py-2.5 rounded-2xl shadow-[0_0_25px_rgba(6,182,212,0.25)] backdrop-blur-md w-full sm:w-auto justify-center sm:justify-start">
+          {/* Live Clock */}
+          <div className="flex items-center gap-2.5">
+            <div className="relative">
+              <Clock className="w-5 sm:w-6 h-5 sm:h-6 text-cyan-400 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-emerald-400 absolute -top-0.5 -right-0.5 animate-ping"></span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 leading-none flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                LIVE TIME
+              </span>
+              <span
+                className="font-mono text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-teal-200 to-white tracking-widest mt-0.5"
+                suppressHydrationWarning
+              >
+                {mounted ? currentTimeFormatted || "02:35 PM" : "02:35 PM"}
+              </span>
+            </div>
+          </div>
+
+          <div className="h-8 w-px bg-slate-700/80 hidden sm:block"></div>
+
+          {/* Today's Live Date */}
+          <div className="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800 w-full sm:w-auto justify-center sm:justify-start">
+            <CalendarIcon className="w-4 sm:w-5 h-4 sm:h-5 text-teal-400 shrink-0" />
+            <div className="flex flex-col text-left">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-teal-400/90 leading-none">
+                TODAY'S LIVE DATE
+              </span>
+              <span
+                className="text-xs sm:text-sm font-black text-white tracking-wide mt-0.5 whitespace-nowrap"
+                suppressHydrationWarning
+              >
+                {mounted ? currentLiveDateFormatted : "Today"}
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Center: Title */}
@@ -272,29 +341,57 @@ export default function AllRoomsLiveDisplay() {
           </p>
         </div>
 
-        {/* Right: Interactive Date Range Button (Matching user uploaded screenshot) */}
+        {/* Right: Dedicated "History Meetings" & Date Range Button */}
         <div className="relative">
           <button
             onClick={() => setDatePickerOpen(!datePickerOpen)}
-            className="flex items-center gap-3 bg-gradient-to-r from-slate-900/95 to-slate-900/80 hover:from-slate-850 hover:to-slate-800 border-2 border-indigo-500/80 hover:border-indigo-400 px-5 py-2.5 rounded-2xl shadow-[0_0_25px_rgba(99,102,241,0.3)] backdrop-blur-md transition cursor-pointer group"
-            title="Click to select date range"
+            className={`flex items-center gap-3 px-4 sm:px-5 py-2.5 rounded-2xl backdrop-blur-md transition cursor-pointer group ${
+              isHistoryMode
+                ? "bg-gradient-to-r from-purple-950/90 via-indigo-900/90 to-slate-900 border-2 border-indigo-400 shadow-[0_0_30px_rgba(129,140,248,0.4)] ring-2 ring-indigo-500/40"
+                : "bg-gradient-to-r from-slate-900/95 to-slate-900/80 hover:from-slate-850 hover:to-slate-800 border-2 border-indigo-500/70 hover:border-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.25)]"
+            }`}
+            title="Click to view meeting history or select custom date range"
           >
-            <CalendarIcon className="w-5 h-5 text-indigo-400 group-hover:scale-110 transition" />
-            <span className="text-sm sm:text-base font-extrabold text-white">
-              {startDate === endDate
-                ? formatDateFull(startDate)
-                : `${formatDateDisplay(startDate)} → ${formatDateDisplay(endDate)}`}
-            </span>
-            <ChevronDown className="w-4 h-4 text-indigo-400 ml-1" />
+            <div className="p-1.5 rounded-xl bg-indigo-500/20 text-indigo-300 group-hover:bg-indigo-500/30 group-hover:scale-105 transition">
+              <CalendarIcon className="w-4 h-4 text-indigo-400" />
+            </div>
+            <div className="flex flex-col text-left">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-black uppercase tracking-wider text-indigo-300">
+                  History Meetings
+                </span>
+                {isHistoryMode ? (
+                  <span className="px-1.5 py-0.2 rounded-md bg-indigo-500 text-slate-950 text-[10px] font-black uppercase animate-pulse">
+                    Active
+                  </span>
+                ) : (
+                  <span className="px-1.5 py-0.2 rounded-md bg-slate-800 text-slate-400 text-[10px] font-bold">
+                    Archive
+                  </span>
+                )}
+              </div>
+              <span className="text-xs sm:text-sm font-bold text-white mt-0.5 line-clamp-1">
+                {isHistoryMode
+                  ? startDate === endDate
+                    ? formatDateDisplay(startDate)
+                    : `${formatDateDisplay(startDate)} → ${formatDateDisplay(endDate)}`
+                  : "Date Range & Past"}
+              </span>
+            </div>
+            <ChevronDown
+              className={`w-4 h-4 text-indigo-400 ml-1 transition-transform duration-200 ${
+                datePickerOpen ? "rotate-180" : ""
+              }`}
+            />
           </button>
 
-          {/* Date Range Modal Dropdown */}
+          {/* Meeting History / Date Range Modal Dropdown */}
           {datePickerOpen && (
-            <div className="absolute right-0 mt-3 w-80 sm:w-96 max-w-[calc(100vw-2rem)] bg-slate-900/95 border-2 border-indigo-500/80 rounded-3xl p-4 sm:p-5 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in zoom-in-95">
+            <div className="absolute right-0 mt-3 w-80 sm:w-96 max-w-[calc(100vw-2rem)] bg-slate-900/98 border-2 border-indigo-500/80 rounded-3xl p-4 sm:p-5 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in zoom-in-95">
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                 <div className="flex items-center gap-2 text-white font-bold text-sm">
                   <Filter className="w-4 h-4 text-indigo-400" />
-                  <span>Select Date Range</span>
+                  <span>Meeting History & Date Filter</span>
                 </div>
                 <button
                   onClick={() => setDatePickerOpen(false)}
@@ -304,8 +401,34 @@ export default function AllRoomsLiveDisplay() {
                 </button>
               </div>
 
+              <p className="text-[11px] text-slate-400 mt-2 mb-3">
+                Select a past date or date range to inspect previous and upcoming meetings:
+              </p>
+
               {/* Quick Preset Buttons */}
-              <div className="grid grid-cols-3 gap-1.5 my-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mb-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const todayStr = getTodayString();
+                    setTempStartDate(todayStr);
+                    setTempEndDate(todayStr);
+                  }}
+                  className="px-2 py-1.5 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/70 text-[11px] font-bold text-emerald-300 border border-emerald-700/60 text-center"
+                >
+                  ⚡ Today (Live)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const y = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+                    setTempStartDate(y);
+                    setTempEndDate(y);
+                  }}
+                  className="px-2 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-slate-300 border border-slate-700 text-center"
+                >
+                  📅 Yesterday
+                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -314,18 +437,7 @@ export default function AllRoomsLiveDisplay() {
                   }}
                   className="px-2 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-slate-300 border border-slate-700 text-center"
                 >
-                  27 Aug (Mock)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const todayStr = new Date().toISOString().slice(0, 10);
-                    setTempStartDate(todayStr);
-                    setTempEndDate(todayStr);
-                  }}
-                  className="px-2 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-slate-300 border border-slate-700 text-center"
-                >
-                  Today
+                  27 Aug Demo
                 </button>
                 <button
                   type="button"
@@ -335,7 +447,7 @@ export default function AllRoomsLiveDisplay() {
                   }}
                   className="px-2 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-[11px] font-bold text-indigo-300 border border-indigo-500/40 text-center"
                 >
-                  27–30 Aug (Range)
+                  27–30 Aug Range
                 </button>
               </div>
 
@@ -365,20 +477,20 @@ export default function AllRoomsLiveDisplay() {
                   />
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+                <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-800">
                   <button
                     type="button"
-                    onClick={() => setDatePickerOpen(false)}
-                    className="px-3.5 py-1.5 text-xs font-semibold text-slate-400 hover:text-white"
+                    onClick={handleResetToLiveToday}
+                    className="px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-emerald-400 transition"
                   >
-                    Cancel
+                    Reset to Today
                   </button>
                   <button
                     type="button"
                     onClick={handleApplyDateRange}
                     className="px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition flex items-center gap-1.5"
                   >
-                    <span>Apply Date Range</span>
+                    <span>Apply Filter</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -388,13 +500,50 @@ export default function AllRoomsLiveDisplay() {
         </div>
       </header>
 
+      {/* History Mode Active Notification Banner */}
+      {isHistoryMode && (
+        <div className="my-3 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-indigo-950/90 via-slate-900/95 to-purple-950/90 border-2 border-indigo-500/60 shadow-[0_0_30px_rgba(99,102,241,0.25)] flex flex-wrap items-center justify-between gap-3 z-20 relative animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-indigo-500/20 text-indigo-300">
+              <Filter className="w-5 h-5 text-indigo-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black uppercase tracking-wider text-indigo-300">
+                  Meeting History Filter Active
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[11px] font-bold border border-indigo-500/30">
+                  {totalItemsCount} {isDateRange ? "meetings found" : "rooms shown"}
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Viewing schedule for:{" "}
+                <span className="font-bold text-white">
+                  {startDate === endDate
+                    ? formatDateWithWeekday(startDate)
+                    : `${formatDateDisplay(startDate)} to ${formatDateDisplay(endDate)}`}
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={handleResetToLiveToday}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-[0_0_20px_rgba(16,185,129,0.35)] transition flex items-center gap-2 cursor-pointer group"
+          >
+            <Radio className="w-3.5 h-3.5 text-emerald-200 animate-pulse" />
+            <span>Return to Live Today</span>
+          </button>
+        </div>
+      )}
+
       {/* Information Banner */}
       <div className="my-2 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400 px-2 z-10">
         <div className="flex items-center gap-2">
           <span className="font-bold text-slate-200">
             {isDateRange
               ? `Showing meetings from ${formatDateDisplay(startDate)} to ${formatDateDisplay(endDate)}`
-              : `Workspace Live Status for ${formatDateFull(startDate)}`}
+              : `Workspace Status for ${formatDateFull(startDate)}`}
           </span>
           <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-bold text-[11px] border border-indigo-500/30">
             Total: {totalItemsCount} {isDateRange ? "meetings" : "rooms"}

@@ -4,7 +4,7 @@ import React, { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { Clock, Calendar, Users, ArrowLeft, CheckCircle2, Volume2, Sparkles, Radio } from "lucide-react";
 import { TimeSimulator } from "@/components/ui/TimeSimulator";
-import { formatTime12Hour, formatDateDisplay } from "@/lib/meetingStatus";
+import { formatTime12Hour, formatDateDisplay, formatDateWithWeekday, getTodayFormattedWithWeekday } from "@/lib/meetingStatus";
 import { RoomData, MeetingData, MeetingStatus } from "@/types";
 
 interface PageProps {
@@ -22,6 +22,7 @@ export default function RoomSpecificDisplay({ params }: PageProps) {
 
   const [displayDate, setDisplayDate] = useState("");
   const [clockString, setClockString] = useState("");
+  const [liveDateFormatted, setLiveDateFormatted] = useState("");
   const [simulatedTime, setSimulatedTime] = useState("");
   const [simulatedDate, setSimulatedDate] = useState("");
   const [isLiveMode, setIsLiveMode] = useState(true);
@@ -30,13 +31,14 @@ export default function RoomSpecificDisplay({ params }: PageProps) {
 
   useEffect(() => {
     setMounted(true);
+    setLiveDateFormatted(getTodayFormattedWithWeekday());
   }, []);
 
   // Live ticking clock
   useEffect(() => {
     const tick = () => {
+      const now = new Date();
       if (isLiveMode) {
-        const now = new Date();
         let hours = now.getHours();
         const minutes = String(now.getMinutes()).padStart(2, "0");
         const seconds = String(now.getSeconds()).padStart(2, "0");
@@ -46,6 +48,14 @@ export default function RoomSpecificDisplay({ params }: PageProps) {
           `${String(hours).padStart(2, "0")}:${minutes}:${seconds} ${period}`
         );
       }
+      setLiveDateFormatted(
+        now.toLocaleDateString("en-US", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      );
     };
     tick();
     const interval = setInterval(tick, 1000);
@@ -116,7 +126,7 @@ export default function RoomSpecificDisplay({ params }: PageProps) {
       </div>
 
       {/* Top Floating Controls */}
-      <div className="flex items-center justify-between gap-4 mb-3 z-20 relative">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-3 z-20 relative">
         <div className="flex items-center gap-3">
           <Link
             href="/display"
@@ -143,13 +153,13 @@ export default function RoomSpecificDisplay({ params }: PageProps) {
         </div>
       </div>
 
-      {/* Screen Header (Mockup 8) */}
-      <header className="flex items-center justify-between border-b border-slate-800/80 pb-5 pt-2 z-10 relative">
+      {/* Screen Header */}
+      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-5 pt-2 z-10 relative">
         <div>
           <h1 className="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300 tracking-wider uppercase font-mono drop-shadow-[0_0_30px_rgba(52,211,153,0.4)]">
             {room ? room.roomNumber : resolvedParams.roomId}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-300 font-bold mt-1 flex items-center gap-2">
+          <p className="text-xs sm:text-sm text-slate-300 font-bold mt-1 flex items-center gap-2 flex-wrap">
             <span>{room?.roomName}</span>
             <span>•</span>
             <span>{room?.location}</span>
@@ -159,18 +169,43 @@ export default function RoomSpecificDisplay({ params }: PageProps) {
           </p>
         </div>
 
-        <div className="text-right">
-          <div
-            className="font-mono text-2xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-white tracking-widest drop-shadow-[0_0_20px_rgba(6,182,212,0.3)]"
-            suppressHydrationWarning
-          >
-            {mounted ? clockString || "02:35 PM" : "02:35 PM"}
+        <div className="flex items-center gap-4 bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-slate-950 border-2 border-cyan-500/50 px-4 sm:px-5 py-2.5 rounded-2xl shadow-[0_0_25px_rgba(6,182,212,0.25)] backdrop-blur-md">
+          {/* Live Clock */}
+          <div className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-cyan-400 animate-pulse" />
+            <div className="flex flex-col">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 leading-none">
+                LIVE TIME
+              </span>
+              <span
+                className="font-mono text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-white tracking-wider mt-0.5"
+                suppressHydrationWarning
+              >
+                {mounted ? clockString || "02:35 PM" : "02:35 PM"}
+              </span>
+            </div>
           </div>
-          <div
-            className="text-xs sm:text-sm text-slate-400 font-bold mt-0.5"
-            suppressHydrationWarning
-          >
-            {displayDate ? formatDateDisplay(displayDate) : "27 Aug 2026"}
+
+          <div className="h-7 w-px bg-slate-700/80"></div>
+
+          {/* Date */}
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-teal-400" />
+            <div className="flex flex-col text-left">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-teal-400/90 leading-none">
+                {isLiveMode ? "TODAY'S DATE" : "SCHEDULE DATE"}
+              </span>
+              <span
+                className="text-xs sm:text-sm font-bold text-white mt-0.5 whitespace-nowrap"
+                suppressHydrationWarning
+              >
+                {mounted
+                  ? isLiveMode
+                    ? liveDateFormatted
+                    : formatDateWithWeekday(displayDate)
+                  : "Today"}
+              </span>
+            </div>
           </div>
         </div>
       </header>
