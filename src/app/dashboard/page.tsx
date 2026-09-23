@@ -15,7 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { MeetingData, RoomData } from "@/types";
-import { formatTime12Hour } from "@/lib/meetingStatus";
+import { formatTime12Hour, getTodayString } from "@/lib/meetingStatus";
 
 export default function DashboardPage() {
   const [meetings, setMeetings] = useState<MeetingData[]>([]);
@@ -27,8 +27,9 @@ export default function DashboardPage() {
 
   const fetchData = async (time?: string, date?: string) => {
     try {
+      const activeDate = date || getTodayString();
       const params = new URLSearchParams();
-      if (date) params.set("date", date);
+      params.set("date", activeDate);
       if (time) params.set("time", time);
       const q = params.toString() ? `?${params.toString()}` : "";
 
@@ -124,18 +125,18 @@ export default function DashboardPage() {
 
         {/* KPI Cards Grid (Matching Mockup 2) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* Card 1: Total Meetings */}
+          {/* Card 1: Today's Meetings */}
           <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between hover:shadow-md transition">
             <div>
-              <p className="text-3xl font-extrabold text-slate-900 leading-none">
+              <p className="text-3xl font-extrabold text-indigo-600 leading-none">
                 {loading ? "..." : totalMeetingsToday}
               </p>
               <p className="text-xs font-semibold text-slate-700 mt-1.5">
-                Total Meetings
+                Today&apos;s Meetings
               </p>
               <p className="text-[11px] text-slate-400">Scheduled Today</p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center">
               <Calendar className="w-6 h-6" />
             </div>
           </div>
