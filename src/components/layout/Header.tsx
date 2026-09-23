@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Bell, Tv, ChevronDown, UserCheck, ShieldCheck } from "lucide-react";
+import { Bell, Tv, ChevronDown, UserCheck, ShieldCheck, Menu } from "lucide-react";
 import { SessionUser } from "@/types";
 
 interface HeaderProps {
@@ -10,13 +10,22 @@ interface HeaderProps {
   onMenuToggle?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ user }) => {
+export const Header: React.FC<HeaderProps> = ({ user, onMenuToggle }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
-      <div className="flex items-center gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 hidden sm:block">
+    <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Mobile Hamburger Menu Toggle */}
+        <button
+          onClick={onMenuToggle}
+          className="md:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
+          aria-label="Toggle Navigation Menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+
+        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 truncate max-w-[140px] sm:max-w-none">
           Enterprise Workspace
         </h2>
       </div>

@@ -228,57 +228,96 @@ export default function DashboardPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="bg-slate-50/80 border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                    <th className="py-3.5 px-6">Meeting</th>
-                    <th className="py-3.5 px-6">Room</th>
-                    <th className="py-3.5 px-6">Time</th>
-                    <th className="py-3.5 px-6">Organizer</th>
-                    <th className="py-3.5 px-6">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                  {meetings.map((m) => (
-                    <tr
-                      key={m.id}
-                      className="hover:bg-slate-50/80 transition-colors"
-                    >
-                      <td className="py-4 px-6">
-                        <Link
-                          href={`/meetings/${m.id}`}
-                          className="font-bold text-slate-900 hover:text-indigo-600 transition block text-sm"
-                        >
-                          {m.title}
-                        </Link>
-                        {m.description && (
-                          <span className="text-[11px] text-slate-400 line-clamp-1">
-                            {m.description}
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-4 px-6 text-slate-600">
-                        <span className="font-semibold text-slate-800">
-                          {m.room?.roomNumber || "Room"}
+            <>
+              {/* Mobile Cards View (< sm screens) */}
+              <div className="sm:hidden divide-y divide-slate-100">
+                {meetings.map((m) => (
+                  <div key={m.id} className="p-4 space-y-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <Link
+                        href={`/meetings/${m.id}`}
+                        className="font-bold text-slate-900 hover:text-indigo-600 transition text-sm flex-1 leading-snug"
+                      >
+                        {m.title}
+                      </Link>
+                      <StatusBadge status={m.status || "UPCOMING"} size="sm" />
+                    </div>
+                    {m.description && (
+                      <p className="text-xs text-slate-500 line-clamp-1">{m.description}</p>
+                    )}
+                    <div className="flex flex-wrap items-center justify-between text-xs text-slate-500 gap-y-1 pt-1">
+                      <div className="flex items-center gap-1.5 font-medium text-slate-700">
+                        <DoorClosed className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>{m.room?.roomNumber || "Room"}</span>
+                        <span className="text-slate-400">({m.room?.roomName})</span>
+                      </div>
+                      <div className="flex items-center gap-1 font-mono font-semibold text-slate-700">
+                        <Clock className="w-3.5 h-3.5 text-slate-400" />
+                        <span>
+                          {formatTime12Hour(m.startTime)} - {formatTime12Hour(m.endTime)}
                         </span>
-                        <span className="text-[11px] text-slate-400 block">
-                          {m.room?.roomName}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-slate-600 font-mono">
-                        {formatTime12Hour(m.startTime)} -{" "}
-                        {formatTime12Hour(m.endTime)}
-                      </td>
-                      <td className="py-4 px-6 text-slate-600">{m.organizer}</td>
-                      <td className="py-4 px-6">
-                        <StatusBadge status={m.status || "UPCOMING"} size="sm" />
-                      </td>
+                      </div>
+                    </div>
+                    <div className="text-[11px] text-slate-400">
+                      Organizer: <span className="font-medium text-slate-700">{m.organizer}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop / Tablet Table View (>= sm screens) */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="bg-slate-50/80 border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                      <th className="py-3.5 px-6">Meeting</th>
+                      <th className="py-3.5 px-6">Room</th>
+                      <th className="py-3.5 px-6">Time</th>
+                      <th className="py-3.5 px-6">Organizer</th>
+                      <th className="py-3.5 px-6">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                    {meetings.map((m) => (
+                      <tr
+                        key={m.id}
+                        className="hover:bg-slate-50/80 transition-colors"
+                      >
+                        <td className="py-4 px-6">
+                          <Link
+                            href={`/meetings/${m.id}`}
+                            className="font-bold text-slate-900 hover:text-indigo-600 transition block text-sm"
+                          >
+                            {m.title}
+                          </Link>
+                          {m.description && (
+                            <span className="text-[11px] text-slate-400 line-clamp-1">
+                              {m.description}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-4 px-6 text-slate-600">
+                          <span className="font-semibold text-slate-800">
+                            {m.room?.roomNumber || "Room"}
+                          </span>
+                          <span className="text-[11px] text-slate-400 block">
+                            {m.room?.roomName}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-slate-600 font-mono">
+                          {formatTime12Hour(m.startTime)} -{" "}
+                          {formatTime12Hour(m.endTime)}
+                        </td>
+                        <td className="py-4 px-6 text-slate-600">{m.organizer}</td>
+                        <td className="py-4 px-6">
+                          <StatusBadge status={m.status || "UPCOMING"} size="sm" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </div>

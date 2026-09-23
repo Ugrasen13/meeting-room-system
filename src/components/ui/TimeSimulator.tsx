@@ -30,15 +30,15 @@ export const TimeSimulator: React.FC<TimeSimulatorProps> = ({
   ];
 
   return (
-    <div className="bg-slate-900/90 backdrop-blur-md text-white border border-slate-700/80 rounded-2xl shadow-2xl p-3 text-xs">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
+    <div className="bg-slate-900/90 backdrop-blur-md text-white border border-slate-700/80 rounded-2xl shadow-2xl p-3 text-xs w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2 flex-wrap">
           <span
             className={`w-2.5 h-2.5 rounded-full ${
               isLiveMode ? "bg-emerald-500 animate-ping" : "bg-amber-400"
             }`}
           ></span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <Clock className="w-3.5 h-3.5 text-indigo-400" />
             <span className="font-semibold text-slate-200">
               {isLiveMode ? "System Live Time:" : "Simulated Time:"}
@@ -52,7 +52,7 @@ export const TimeSimulator: React.FC<TimeSimulatorProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           {!isLiveMode && (
             <button
               onClick={() => onTimeChange("", "", true)}

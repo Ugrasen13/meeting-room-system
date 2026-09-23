@@ -24,6 +24,18 @@ async function main() {
   const userPasswordHash = await bcrypt.hash("User@123", 10);
 
   // 1. Create Users
+    const cabsPasswordHash = await bcrypt.hash("aew&cmk-ii", 10);
+    await prisma.user.create({
+      data: {
+        userId: "CABS.DRDO",
+        name: "CABS DRDO Admin",
+        email: "cabs.drdo@123",
+        passwordHash: cabsPasswordHash,
+        role: "admin",
+        status: "active",
+      },
+    });
+
     const pradhanPasswordHash = await bcrypt.hash("123", 10);
     await prisma.user.create({
       data: {

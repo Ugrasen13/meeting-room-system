@@ -135,7 +135,7 @@ export default function MeetingDetailsPage({ params }: PageProps) {
         </div>
 
         {/* Meeting Details Card (Section 18) */}
-        <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm space-y-6">
+        <div className="bg-white rounded-3xl p-5 sm:p-8 border border-slate-200 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6">
             <div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 block mb-1">

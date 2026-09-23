@@ -195,84 +195,139 @@ export default function RoomsPage() {
               <p className="text-sm font-semibold text-slate-700">No rooms added yet</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="bg-slate-50/80 border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                    <th className="py-3.5 px-6">Room Name</th>
-                    <th className="py-3.5 px-6">Room Number</th>
-                    <th className="py-3.5 px-6">Location</th>
-                    <th className="py-3.5 px-6">Capacity</th>
-                    <th className="py-3.5 px-6">Status</th>
-                    <th className="py-3.5 px-6 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                  {rooms.map((room) => (
-                    <tr
-                      key={room.id}
-                      className="hover:bg-slate-50/80 transition-colors"
-                    >
-                      <td className="py-4 px-6 font-bold text-slate-900 text-sm">
-                        {room.roomName}
-                      </td>
-                      <td className="py-4 px-6 font-semibold text-slate-700">
-                        {room.roomNumber}
-                      </td>
-                      <td className="py-4 px-6 text-slate-600">{room.location}</td>
-                      <td className="py-4 px-6 text-slate-600">
-                        {room.capacity} people
-                      </td>
-                      <td className="py-4 px-6">
-                        <StatusBadge
-                          status={room.status === "active" ? "ACTIVE" : "INACTIVE"}
-                          size="sm"
-                        />
-                      </td>
-                      <td className="py-4 px-6 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {/* Live Tablet screen shortcut */}
-                          <Link
-                            href={`/display/${room.roomNumber}`}
-                            target="_blank"
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
-                            title="Open Room Tablet Screen"
-                          >
-                            <Tv className="w-4 h-4" />
-                          </Link>
+            <>
+              {/* Mobile Cards View (< sm screens) */}
+              <div className="sm:hidden divide-y divide-slate-100">
+                {rooms.map((room) => (
+                  <div key={room.id} className="p-4 space-y-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-sm">{room.roomName}</h4>
+                        <span className="text-xs font-semibold text-indigo-600">{room.roomNumber}</span>
+                      </div>
+                      <StatusBadge
+                        status={room.status === "active" ? "ACTIVE" : "INACTIVE"}
+                        size="sm"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-slate-500 bg-slate-50 p-2 rounded-xl">
+                      <span>Location: <strong>{room.location}</strong></span>
+                      <span>Capacity: <strong>{room.capacity} people</strong></span>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                      <Link
+                        href={`/display/${room.roomNumber}`}
+                        target="_blank"
+                        className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition flex items-center gap-1"
+                        title="Open Room Tablet Screen"
+                      >
+                        <Tv className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Tablet View</span>
+                      </Link>
 
-                          {isAdmin && (
-                            <>
-                              <button
-                                onClick={() => openEditModal(room)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition cursor-pointer"
-                                title="Edit Room"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(room)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-                                title="Delete or Deactivate Room"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
+                      {isAdmin && (
+                        <>
+                          <button
+                            onClick={() => openEditModal(room)}
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 transition flex items-center gap-1 cursor-pointer"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            onClick={() => handleDelete(room)}
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 transition flex items-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Delete</span>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop / Tablet Table View (>= sm screens) */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="bg-slate-50/80 border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                      <th className="py-3.5 px-6">Room Name</th>
+                      <th className="py-3.5 px-6">Room Number</th>
+                      <th className="py-3.5 px-6">Location</th>
+                      <th className="py-3.5 px-6">Capacity</th>
+                      <th className="py-3.5 px-6">Status</th>
+                      <th className="py-3.5 px-6 text-right">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                    {rooms.map((room) => (
+                      <tr
+                        key={room.id}
+                        className="hover:bg-slate-50/80 transition-colors"
+                      >
+                        <td className="py-4 px-6 font-bold text-slate-900 text-sm">
+                          {room.roomName}
+                        </td>
+                        <td className="py-4 px-6 font-semibold text-slate-700">
+                          {room.roomNumber}
+                        </td>
+                        <td className="py-4 px-6 text-slate-600">{room.location}</td>
+                        <td className="py-4 px-6 text-slate-600">
+                          {room.capacity} people
+                        </td>
+                        <td className="py-4 px-6">
+                          <StatusBadge
+                            status={room.status === "active" ? "ACTIVE" : "INACTIVE"}
+                            size="sm"
+                          />
+                        </td>
+                        <td className="py-4 px-6 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {/* Live Tablet screen shortcut */}
+                            <Link
+                              href={`/display/${room.roomNumber}`}
+                              target="_blank"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
+                              title="Open Room Tablet Screen"
+                            >
+                              <Tv className="w-4 h-4" />
+                            </Link>
+
+                            {isAdmin && (
+                              <>
+                                <button
+                                  onClick={() => openEditModal(room)}
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition cursor-pointer"
+                                  title="Edit Room"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(room)}
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                                  title="Delete or Deactivate Room"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
 
         {/* Add/Edit Room Modal (Sections 20 & 21) */}
         {modalOpen && (
-          <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-            <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6">
+          <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in">
+            <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-5 sm:p-8 shadow-2xl border border-slate-200 space-y-6">
               <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <div className="flex items-center gap-2.5">
                   <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">

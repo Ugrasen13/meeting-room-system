@@ -290,7 +290,7 @@ export default function AllRoomsLiveDisplay() {
 
           {/* Date Range Modal Dropdown */}
           {datePickerOpen && (
-            <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-slate-900/95 border-2 border-indigo-500/80 rounded-3xl p-5 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in zoom-in-95">
+            <div className="absolute right-0 mt-3 w-80 sm:w-96 max-w-[calc(100vw-2rem)] bg-slate-900/95 border-2 border-indigo-500/80 rounded-3xl p-4 sm:p-5 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in zoom-in-95">
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                 <div className="flex items-center gap-2 text-white font-bold text-sm">
                   <Filter className="w-4 h-4 text-indigo-400" />

@@ -139,9 +139,9 @@ export default function MeetingsPage() {
         </div>
 
         {/* Filter Bar (Matching Mockup 3) */}
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex flex-wrap items-center gap-3">
+        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap items-center gap-3">
           {/* Search Box */}
-          <div className="flex-1 min-w-[200px] relative">
+          <div className="sm:col-span-2 lg:flex-1 lg:min-w-[200px] relative">
             <input
               type="text"
               placeholder="Search meeting..."
@@ -154,17 +154,17 @@ export default function MeetingsPage() {
 
           {/* Date Picker */}
           <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
-            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+            <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="bg-transparent text-xs text-slate-700 font-medium focus:outline-none"
+              className="bg-transparent text-xs text-slate-700 font-medium focus:outline-none w-full"
             />
             {selectedDate && (
               <button
                 onClick={() => setSelectedDate("")}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
                 title="Clear date"
               >
                 <X className="w-3 h-3" />
@@ -176,7 +176,7 @@ export default function MeetingsPage() {
           <select
             value={selectedRoom}
             onChange={(e) => setSelectedRoom(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
           >
             <option value="all">All Rooms</option>
             {rooms.map((r) => (
@@ -190,7 +190,7 @@ export default function MeetingsPage() {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
           >
             <option value="all">All Status</option>
             <option value="ONGOING">Ongoing</option>
@@ -199,7 +199,7 @@ export default function MeetingsPage() {
           </select>
         </div>
 
-        {/* Meetings Table (Matching Mockup 3) */}
+        {/* Meetings Table & Mobile Cards */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
           {loading ? (
             <div className="py-20 flex flex-col items-center justify-center gap-2">
@@ -215,92 +215,161 @@ export default function MeetingsPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="bg-slate-50/80 border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                    <th className="py-3.5 px-6">Meeting</th>
-                    <th className="py-3.5 px-6">Room</th>
-                    <th className="py-3.5 px-6">Date</th>
-                    <th className="py-3.5 px-6">Time</th>
-                    <th className="py-3.5 px-6">Status</th>
-                    <th className="py-3.5 px-6 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                  {meetings.map((m) => (
-                    <tr
-                      key={m.id}
-                      className="hover:bg-slate-50/80 transition-colors"
-                    >
-                      <td className="py-4 px-6">
+            <>
+              {/* Mobile Card List View (< sm screens) */}
+              <div className="sm:hidden divide-y divide-slate-100">
+                {meetings.map((m) => (
+                  <div key={m.id} className="p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
                         <Link
                           href={`/meetings/${m.id}`}
-                          className="font-bold text-slate-900 hover:text-indigo-600 transition block text-sm"
+                          className="font-bold text-slate-900 hover:text-indigo-600 transition text-sm block leading-snug"
                         >
                           {m.title}
                         </Link>
-                        <span className="text-[11px] text-slate-400 block">
-                          Organizer: {m.organizer}
+                        <span className="text-[11px] text-slate-400">Organizer: {m.organizer}</span>
+                      </div>
+                      <StatusBadge status={m.status || "UPCOMING"} size="sm" />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl text-slate-600">
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase font-bold block">Room</span>
+                        <span className="font-semibold text-slate-800">{m.room?.roomNumber}</span>
+                        <span className="text-[11px] text-slate-500 block truncate">{m.room?.roomName}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase font-bold block">Schedule</span>
+                        <span className="font-medium block">{formatDateDisplay(m.meetingDate)}</span>
+                        <span className="font-mono text-[11px] text-slate-500 block">
+                          {formatTime12Hour(m.startTime)} - {formatTime12Hour(m.endTime)}
                         </span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="font-semibold text-slate-800">
-                          {m.room?.roomNumber}
-                        </span>
-                        <span className="text-[11px] text-slate-400 block">
-                          {m.room?.roomName}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-slate-600 font-medium">
-                        {formatDateDisplay(m.meetingDate)}
-                      </td>
-                      <td className="py-4 px-6 text-slate-600 font-mono">
-                        {formatTime12Hour(m.startTime)} -{" "}
-                        {formatTime12Hour(m.endTime)}
-                      </td>
-                      <td className="py-4 px-6">
-                        <StatusBadge status={m.status || "UPCOMING"} size="sm" />
-                      </td>
-                      <td className="py-4 px-6 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* View details */}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-50">
+                      <Link
+                        href={`/meetings/${m.id}`}
+                        className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition flex items-center gap-1"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>View</span>
+                      </Link>
+
+                      {isAdmin && (
+                        <Link
+                          href={`/meetings/${m.id}/edit`}
+                          className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 transition flex items-center gap-1"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Edit</span>
+                        </Link>
+                      )}
+
+                      {isAdmin && (
+                        <button
+                          onClick={() => setMeetingToDelete(m)}
+                          className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 transition flex items-center gap-1 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop / Tablet Table View (>= sm screens) */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="bg-slate-50/80 border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                      <th className="py-3.5 px-6">Meeting</th>
+                      <th className="py-3.5 px-6">Room</th>
+                      <th className="py-3.5 px-6">Date</th>
+                      <th className="py-3.5 px-6">Time</th>
+                      <th className="py-3.5 px-6">Status</th>
+                      <th className="py-3.5 px-6 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                    {meetings.map((m) => (
+                      <tr
+                        key={m.id}
+                        className="hover:bg-slate-50/80 transition-colors"
+                      >
+                        <td className="py-4 px-6">
                           <Link
                             href={`/meetings/${m.id}`}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
-                            title="View Meeting Details"
+                            className="font-bold text-slate-900 hover:text-indigo-600 transition block text-sm"
                           >
-                            <Eye className="w-4 h-4" />
+                            {m.title}
                           </Link>
-
-                          {/* Admin Edit */}
-                          {isAdmin && (
+                          <span className="text-[11px] text-slate-400 block">
+                            Organizer: {m.organizer}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="font-semibold text-slate-800">
+                            {m.room?.roomNumber}
+                          </span>
+                          <span className="text-[11px] text-slate-400 block">
+                            {m.room?.roomName}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-slate-600 font-medium">
+                          {formatDateDisplay(m.meetingDate)}
+                        </td>
+                        <td className="py-4 px-6 text-slate-600 font-mono">
+                          {formatTime12Hour(m.startTime)} -{" "}
+                          {formatTime12Hour(m.endTime)}
+                        </td>
+                        <td className="py-4 px-6">
+                          <StatusBadge status={m.status || "UPCOMING"} size="sm" />
+                        </td>
+                        <td className="py-4 px-6 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {/* View details */}
                             <Link
-                              href={`/meetings/${m.id}/edit`}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition"
-                              title="Edit Meeting"
+                              href={`/meetings/${m.id}`}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
+                              title="View Meeting Details"
                             >
-                              <Edit2 className="w-4 h-4" />
+                              <Eye className="w-4 h-4" />
                             </Link>
-                          )}
 
-                          {/* Admin Delete */}
-                          {isAdmin && (
-                            <button
-                              onClick={() => setMeetingToDelete(m)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
-                              title="Delete Meeting"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                            {/* Admin Edit */}
+                            {isAdmin && (
+                              <Link
+                                href={`/meetings/${m.id}/edit`}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition"
+                                title="Edit Meeting"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </Link>
+                            )}
+
+                            {/* Admin Delete */}
+                            {isAdmin && (
+                              <button
+                                onClick={() => setMeetingToDelete(m)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                                title="Delete Meeting"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
 
