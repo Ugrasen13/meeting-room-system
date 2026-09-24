@@ -72,37 +72,68 @@ export function formatDateWithWeekday(dateStr: string): string {
 }
 
 /**
- * Returns today's date in "YYYY-MM-DD"
+ * Returns today's date in "YYYY-MM-DD" formatted to local timezone (defaults to Asia/Kolkata)
  */
-export function getTodayString(): string {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+export function getTodayString(timezone = "Asia/Kolkata"): string {
+  try {
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    return formatter.format(new Date());
+  } catch {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
 }
 
 /**
  * Returns today's date formatted nicely with weekday, e.g. "Wednesday, 23 Sep 2026"
  */
-export function getTodayFormattedWithWeekday(): string {
-  const d = new Date();
-  return d.toLocaleDateString("en-US", {
-    weekday: "long",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+export function getTodayFormattedWithWeekday(timezone = "Asia/Kolkata"): string {
+  try {
+    const d = new Date();
+    return d.toLocaleDateString("en-US", {
+      timeZone: timezone,
+      weekday: "long",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    const d = new Date();
+    return d.toLocaleDateString("en-US", {
+      weekday: "long",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }
 }
 
 /**
- * Returns current time in "HH:mm"
+ * Returns current time in "HH:mm" formatted to local timezone (defaults to Asia/Kolkata)
  */
-export function getCurrentTimeString(): string {
-  const d = new Date();
-  const hours = String(d.getHours()).padStart(2, "0");
-  const minutes = String(d.getMinutes()).padStart(2, "0");
-  return `${hours}:${minutes}`;
+export function getCurrentTimeString(timezone = "Asia/Kolkata"): string {
+  try {
+    const formatter = new Intl.DateTimeFormat("en-GB", {
+      timeZone: timezone,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    return formatter.format(new Date());
+  } catch {
+    const d = new Date();
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    return `${hours}:${minutes}`;
+  }
 }
 
 /**
@@ -118,19 +149,23 @@ export function computeMeetingStatus(
   const currentDate = refDate || getTodayString();
   const currentTime = refTime || getCurrentTimeString();
 
+  // If meeting date is strictly before current date, it is always COMPLETED
   if (meetingDate < currentDate) {
     return "COMPLETED";
-  } else if (meetingDate > currentDate) {
+  }
+  
+  // If meeting date is in the future, it is UPCOMING
+  if (meetingDate > currentDate) {
     return "UPCOMING";
+  }
+
+  // Same day: compare times
+  if (currentTime < startTime) {
+    return "UPCOMING";
+  } else if (currentTime >= startTime && currentTime < endTime) {
+    return "ONGOING";
   } else {
-    // Same day: compare times
-    if (currentTime < startTime) {
-      return "UPCOMING";
-    } else if (currentTime >= startTime && currentTime < endTime) {
-      return "ONGOING";
-    } else {
-      return "COMPLETED";
-    }
+    return "COMPLETED";
   }
 }
 

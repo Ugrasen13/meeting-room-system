@@ -17,6 +17,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     const { searchParams } = new URL(req.url);
     const date = searchParams.get("date") || getTodayString();
     const time = searchParams.get("time") || getCurrentTimeString();
+    const refDate = searchParams.get("refDate") || getTodayString();
 
     // Look up room by id or roomNumber
     const room = await prisma.room.findFirst({
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     });
 
     const meetingsWithStatus = meetings.map((m) => {
-      const status = computeMeetingStatus(m.meetingDate, m.startTime, m.endTime, date, time);
+      const status = computeMeetingStatus(m.meetingDate, m.startTime, m.endTime, refDate, time);
       return { ...m, status };
     });
 

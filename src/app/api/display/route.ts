@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
       searchParams.get("toDate") ||
       startDate;
     const time = searchParams.get("time") || getCurrentTimeString();
+    const refDate = searchParams.get("refDate") || getTodayString();
 
     // Get all rooms (active rooms first)
     const rooms = await prisma.room.findMany({
@@ -44,13 +45,13 @@ export async function GET(req: NextRequest) {
       orderBy: [{ meetingDate: "asc" }, { startTime: "asc" }],
     });
 
-    // Compute status for all meetings
+    // Compute status for all meetings against current reference date & time
     const allMeetingsWithStatus = meetings.map((m) => {
       const st = computeMeetingStatus(
         m.meetingDate,
         m.startTime,
         m.endTime,
-        startDate,
+        refDate,
         time
       );
       return { ...m, status: st };

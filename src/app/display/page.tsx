@@ -52,13 +52,13 @@ export default function AllRoomsLiveDisplay() {
   const [rooms, setRooms] = useState<RoomDisplayItem[]>([]);
   const [allMeetings, setAllMeetings] = useState<MeetingData[]>([]);
 
-  // Initialize to today's date
-  const [startDate, setStartDate] = useState("2026-08-27");
-  const [endDate, setEndDate] = useState("2026-08-27");
+  // Initialize to today's live date
+  const [startDate, setStartDate] = useState(getTodayString());
+  const [endDate, setEndDate] = useState(getTodayString());
 
   // Temporary picker state
-  const [tempStartDate, setTempStartDate] = useState("2026-08-27");
-  const [tempEndDate, setTempEndDate] = useState("2026-08-27");
+  const [tempStartDate, setTempStartDate] = useState(getTodayString());
+  const [tempEndDate, setTempEndDate] = useState(getTodayString());
   const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   // Maximum 6 items initial display state
@@ -116,7 +116,8 @@ export default function AllRoomsLiveDisplay() {
   const fetchDisplay = async (
     sDate = startDate,
     eDate = endDate,
-    time = simulatedTime
+    time = simulatedTime,
+    rDate = simulatedDate
   ) => {
     try {
       setLoading(true);
@@ -124,6 +125,7 @@ export default function AllRoomsLiveDisplay() {
       params.set("startDate", sDate);
       params.set("endDate", eDate);
       if (time) params.set("time", time);
+      if (rDate) params.set("refDate", rDate);
       const q = params.toString() ? `?${params.toString()}` : "";
 
       const res = await fetch(`/api/display${q}`);
